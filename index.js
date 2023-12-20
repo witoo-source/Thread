@@ -22,11 +22,11 @@ const Message = mongoose.model('Message', {
   timestamp: { type: Date, default: Date.now }
 });
 
-app.get('/promo', (req, res) => {
+app.get('/', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-app.post('/promo', async (req, res) => {
+app.post('/', async (req, res) => {
     try {
         const { user, passwd } = req.body; // Extraer user y passwd del cuerpo de la solicitud
     
